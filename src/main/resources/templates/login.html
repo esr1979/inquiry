@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Iniciar Sesión</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .login-container { background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); width: 300px; text-align: center; }
+        h2 { color: #333; margin-bottom: 20px; }
+        input[type="text"], input[type="password"] { width: calc(100% - 20px); padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px; }
+        input[type="submit"] { width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        input[type="submit"]:hover { background-color: #0056b3; }
+        .error-message { color: red; margin-bottom: 10px; }
+        .logout-message { color: green; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+<div class="login-container">
+    <h2>Iniciar Sesión</h2>
+    <!-- Mensaje de error si la autenticación falla -->
+    <div th:if="${param.error}" class="error-message">
+        Nombre de usuario o contraseña inválidos.
+    </div>
+    <!-- Mensaje si se cierra sesión con éxito -->
+    <div th:if="${param.logout}" class="logout-message">
+        Has cerrado sesión.
+    </div>
+    <form action="/login" method="post">
+
+        <div>
+            <label for="username">Usuario:</label>
+            <input type="text" id="username" name="username" autofocus="autofocus"/>
+        </div>
+        <div>
+            <label for="password">Contraseña:</label>
+            <input type="password" id="password" name="password"/>
+        </div>
+        <div>
+            <input type="submit" value="Entrar"/>
+        </div>
+    </form>
+</div>
+</body>
+</html>
