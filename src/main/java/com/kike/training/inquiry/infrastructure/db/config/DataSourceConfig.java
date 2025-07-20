@@ -96,11 +96,15 @@ public class DataSourceConfig {
             @Qualifier("oneDataSource") DataSource oneDataSource,
             @Qualifier("twoDataSource") DataSource twoDataSource) {
 
-        AbstractRoutingDataSource routingDataSource = new AbstractRoutingDataSource() {
-            /**
-             * Este método es el corazón del enrutamiento. Spring lo llamará
-             * cada vez que necesite una conexión a la base de datos.
-             */
+        DataSourceRouting routingDataSource = new DataSourceRouting();
+
+        //Este código de abajo es lo mismo que la línea inmediatamente superior.
+        /**
+         * Este método es el corazón del enrutamiento. Spring lo llamará
+         * cada vez que necesite una conexión a la base de datos.
+         */
+
+        /**AbstractRoutingDataSource routingDataSource = new AbstractRoutingDataSource() {
             @Override
             protected Object determineCurrentLookupKey() {
                 // Obtenemos la clave que el Aspecto ha guardado en el ThreadLocal
@@ -111,7 +115,7 @@ public class DataSourceConfig {
 
                 return lookupKey;
             }
-        };
+        };**/
 
         // Mapeamos las claves ("one", "two") a los beans de DataSource reales
         Map<Object, Object> targetDataSources = new HashMap<>();
