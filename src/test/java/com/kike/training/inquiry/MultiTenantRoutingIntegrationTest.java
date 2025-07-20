@@ -1,0 +1,110 @@
+package com.kike.training.inquiry;
+
+import com.kike.training.inquiry.domain.model.User;
+import com.kike.training.inquiry.domain.port.in.UserPort;
+import com.kike.training.inquiry.infrastructure.db.config.TestDataSourceConfig;
+import org.flywaydb.core.Flyway;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Import;
+import org.springframework.core.env.Environment;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
+
+
+import java.util.Arrays;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+
+@SpringBootTest
+@ActiveProfiles("test")
+@Import(TestDataSourceConfig.class)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+class MultiTenantRoutingIntegrationTest {
+
+    @Autowired
+    private ApplicationContext context;
+
+    @Autowired
+    JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    Environment environment;
+
+    @Autowired
+    @Qualifier("flywayOne")
+    private Flyway flywayOne;
+
+    @Autowired
+    @Qualifier("flywayTwo")
+    private Flyway flywayTwo;
+
+    private UserPort userPort;
+
+    @BeforeEach
+    void setUp() {
+        this.userPort = context.getBean(UserPort.class);
+    }
+
+    @BeforeEach
+    void cleanWithFlyway() {
+        flywayOne.clean();
+        flywayOne.migrate();
+        flywayTwo.clean();
+        flywayTwo.migrate();
+    }
+
+    @Test
+    void testCheckActiveProfile() {
+        System.out.println(">>> PERFILES ACTIVOS: " + Arrays.toString(environment.getActiveProfiles()));
+    }
+
+    @Test
+    void checkTableExists() {
+        Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM users", Integer.class);
+        assertThat(count).isNotNull();
+    }
+
+    @Test
+    void testSaveUserToDataSourceOne() {
+        userPort.saveUser(new User(null, "Alice", "alice@one.com"), "one");
+        List<User> users = userPort.getAllUsers("one");
+
+        assertThat(users).hasSize(1);
+        assertThat(users.get(0).getUsername()).isEqualTo("Alice");
+    }
+
+    @Test
+    void testSaveUserToDataSourceTwo() {
+        userPort.saveUser(new User(null, "Bob", "bob@two.com"), "two");
+        List<User> users = userPort.getAllUsers("two");
+
+        assertThat(users).hasSize(1);
+        assertThat(users.get(0).getUsername()).isEqualTo("Bob");
+    }
+
+    @Test
+    void testUserIsolationBetweenDataSources() {
+        userPort.saveUser(new User(null, "Charlie", "charlie@one.com"), "one");
+        userPort.saveUser(new User(null, "Diana", "diana@two.com"), "two");
+
+        List<User> usersOne = userPort.getAllUsers("one");
+        List<User> usersTwo = userPort.getAllUsers("two");
+
+        assertThat(usersOne).hasSize(1);
+        assertThat(usersOne.get(0).getUsername()).isEqualTo("Charlie");
+
+        assertThat(usersTwo).hasSize(1);
+        assertThat(usersTwo.get(0).getUsername()).isEqualTo("Diana");
+    }
+
+
+}

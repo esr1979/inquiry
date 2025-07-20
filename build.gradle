@@ -42,7 +42,7 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 
 	// Dependencia de test
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test' // incluye JUnit + Mockito + AssertJ
 	// Para asegurar la compatibilidad con JUnit 5 en tests de Spring Boot
 	testImplementation 'org.springframework.security:spring-security-test' // Para testear seguridad
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

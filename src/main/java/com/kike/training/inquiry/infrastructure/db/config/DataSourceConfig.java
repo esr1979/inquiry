@@ -1,6 +1,7 @@
 package com.kike.training.inquiry.infrastructure.db.config;
 
 import com.kike.training.inquiry.infrastructure.db.aop.DataSourceContextHolder;
+import jakarta.annotation.PostConstruct;
 import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +12,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource;
@@ -20,11 +22,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
+@Profile("!test")
 @EnableJdbcRepositories(basePackages = "com.kike.training.inquiry.domain.port.out")
 public class DataSourceConfig {
 
     private static final Logger log = LoggerFactory.getLogger(DataSourceConfig.class);
 
+
+    @PostConstruct
+    public void init() {
+        System.out.println(">>> Cargando DataSourceConfig de PRODUCCIÓN");
+    }
     // --- BEANS DE PROPIEDADES ---
     @Bean
     @ConfigurationProperties("spring.datasource.one")
