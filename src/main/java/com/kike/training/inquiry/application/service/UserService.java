@@ -1,59 +1,53 @@
 package com.kike.training.inquiry.application.service;
 
+import com.kike.training.inquiry.application.port.in.UserServicePort;
 import com.kike.training.inquiry.domain.model.User;
-import com.kike.training.inquiry.domain.port.in.UserPort;
-import com.kike.training.inquiry.domain.port.out.UserRepository;
+import com.kike.training.inquiry.domain.port.out.UserRepository; // Asumiendo que tu repo tiene un puerto
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
- * Esta es la implementación "limpia" de nuestro puerto de entrada (UserPort).
+ * Implementación del servicio de gestión de usuarios.
  *
- * Fíjate en los siguientes puntos clave:
- * 1.  NO hay lógica de `if/else` basada en el `dataSourceId`.
- * 2.  NO hay métodos privados duplicados como `saveUserInDb1` o `saveUserInDb2`.
- * 3.  NO utiliza la anotación `@TargetDataSource`.
- * 4.  El parámetro `dataSourceId` existe en la firma del método (porque lo exige la interfaz UserPort),
- *     pero esta clase NO LO USA. Su único propósito es ser "leído" por nuestro Aspecto.
+ * Esta clase cumple el contrato definido por `UserServicePort`.
+ * Su responsabilidad es orquestar la lógica de negocio, en este caso,
+ * delegando las operaciones de persistencia al `UserRepository`.
+ *
+ * Gracias al enrutamiento dinámico gestionado por el Aspect, esta clase
+ * opera de forma "ignorante" sobre qué base de datos se está utilizando en
+ * cada momento. Simplemente llama al repositorio y confía en que la
+ * infraestructura subyacente hará lo correcto.
  */
 @Service
-public class UserService implements UserPort {
+public class UserService implements UserServicePort {
 
+    // Inyectamos el puerto de salida (el repositorio)
     private final UserRepository userRepository;
 
     public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
-    /**
-     * Guarda un usuario. La lógica es una simple llamada al repositorio.
-     * El Aspecto ya ha hecho el trabajo de enrutamiento ANTES de que este método se ejecute.
-     */
     @Override
-    public User saveUser(User user, String dataSourceId) {
-        // El parámetro 'dataSourceId' no se usa aquí. Es para el Aspecto.
+    public User saveUser(User user) {
+        // La lógica es una simple delegación.
         return userRepository.save(user);
     }
 
-    /**
-     * Obtiene todos los usuarios. La lógica es una simple llamada al repositorio.
-     * El Aspecto ya ha preparado la conexión correcta.
-     */
     @Override
-    public List<User> getAllUsers(String dataSourceId) {
-        // El parámetro 'dataSourceId' no se usa aquí. Es para el Aspecto.
-        return (List<User>) userRepository.findAll();
+    public List<User> getAllUsers() {
+        // El método findAll() de CrudRepository devuelve un Iterable, lo convertimos a List.
+        Iterable<User> usersIterable = userRepository.findAll();
+        return StreamSupport.stream(usersIterable.spliterator(), false)
+                .collect(Collectors.toList());
     }
 
-    /**
-     * Obtiene un usuario por su ID. La lógica es una simple llamada al repositorio.
-     * El Aspecto ya ha preparado la conexión correcta.
-     */
     @Override
-    public Optional<User> getUserById(Long id, String dataSourceId) {
-        // El parámetro 'dataSourceId' no se usa aquí. Es para el Aspecto.
+    public Optional<User> getUserById(Long id) {
+        // Delegación directa.
         return userRepository.findById(id);
     }
 }

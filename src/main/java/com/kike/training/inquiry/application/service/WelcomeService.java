@@ -1,6 +1,6 @@
 package com.kike.training.inquiry.application.service;
 
-import com.kike.training.inquiry.domain.port.in.WelcomePort;
+import com.kike.training.inquiry.application.port.in.WelcomePort;
 import com.kike.training.inquiry.domain.model.WelcomeMessage;
 import org.springframework.stereotype.Service;
 

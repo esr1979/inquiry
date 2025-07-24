@@ -67,3 +67,28 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+
+// Reemplaza el bloque bootRun entero por este:
+bootRun {
+	// Preparamos una lista para los argumentos de la JVM
+	jvmArgs = []
+	doFirst {
+		def envFile = new File(project.rootDir, "MultiDBLocal.env")
+		if (envFile.exists()) {
+			println "INFO: Cargando configuración de DataSources desde MultiDBLocal.env"
+			envFile.eachLine { line ->
+				// Ignora líneas vacías o comentarios
+				if (line && !line.startsWith('#') && line.contains('=')) {
+					def (key, value) = line.split('=', 2)
+					// Añadimos cada propiedad como un argumento -D a la JVM.
+					// Esta es la forma canónica de hacerlo.
+					jvmArgs += "-D${key.trim()}=${value.trim()}"
+				}
+			}
+			// Log de depuración para ver qué argumentos estamos pasando
+			println "INFO: Pasando los siguientes argumentos a la JVM: ${jvmArgs}"
+		}
+	}
+}
+

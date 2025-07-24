@@ -60,3 +60,8 @@ logs/
 
 # Data files
 data/
+h2_dbs
+/h2_dbs/
+
+# env files. All files will have a template
+MultiDBLocal.env

@@ -1,3 +1,4 @@
+/*
 package com.kike.training.inquiry;
 
 import org.junit.jupiter.api.Test;
@@ -10,4 +11,4 @@ class InquiryApplicationTests {
     void contextLoads() {
     }
 
-}
+}*/

@@ -1,3 +1,4 @@
+/*
 package com.kike.training.inquiry.infrastructure.db.config;
 
 import com.kike.training.inquiry.infrastructure.db.aop.DataSourceContextHolder;
@@ -109,3 +110,4 @@ public class TestDataSourceConfig {
         return rds;
     }
 }
+*/

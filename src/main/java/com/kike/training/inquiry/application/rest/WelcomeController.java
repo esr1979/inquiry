@@ -1,6 +1,6 @@
-package com.kike.training.inquiry.infrastructure.web;
+package com.kike.training.inquiry.application.rest;
 
-import com.kike.training.inquiry.domain.port.in.WelcomePort;
+import com.kike.training.inquiry.application.port.in.WelcomePort;
 import com.kike.training.inquiry.domain.model.WelcomeMessage;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;

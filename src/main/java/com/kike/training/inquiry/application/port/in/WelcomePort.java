@@ -1,4 +1,4 @@
-package com.kike.training.inquiry.domain.port.in;
+package com.kike.training.inquiry.application.port.in;
 
 import com.kike.training.inquiry.domain.model.WelcomeMessage;
 
