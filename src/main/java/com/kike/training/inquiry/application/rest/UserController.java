@@ -31,6 +31,10 @@ public class UserController {
         this.userService = userService;
     }
 
+    // =============================================
+    // MÉTODOS CON REPOSITORIO SPRING DATA
+    // =============================================
+
     /**
      * Crea un nuevo usuario en la base de datos correspondiente al país.
      *
@@ -40,7 +44,6 @@ public class UserController {
      */
     @PostMapping("/{countryCode}")
     public ResponseEntity<User> createUser(@PathVariable String countryCode, @RequestBody User user) {
-        // Observa que ya no pasamos `countryCode` al servicio.
         User savedUser = userService.saveUser(user);
         URI location = URI.create(String.format("/api/users/%s/%d", countryCode, savedUser.getId()));
         return ResponseEntity.created(location).body(savedUser);
@@ -54,7 +57,6 @@ public class UserController {
      */
     @GetMapping("/{countryCode}")
     public ResponseEntity<List<User>> getAllUsers(@PathVariable String countryCode) {
-        // El servicio ya no necesita saber el país.
         List<User> users = userService.getAllUsers();
         return ResponseEntity.ok(users);
     }
@@ -68,9 +70,67 @@ public class UserController {
      */
     @GetMapping("/{countryCode}/{id}")
     public ResponseEntity<User> getUserById(@PathVariable String countryCode, @PathVariable Long id) {
-        // El servicio solo necesita el ID, el contexto del país ya está establecido.
         return userService.getUserById(id)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    // =============================================
+    // MÉTODOS CON SQL NATIVO (JdbcTemplate)
+    // =============================================
+
+    /**
+     * Inserta un usuario usando SQL manual (JdbcTemplate).
+     */
+    @PostMapping("/{countryCode}/native")
+    public ResponseEntity<Void> createUserNative(@PathVariable String countryCode, @RequestBody User user) {
+        userService.insertUserNative(user);
+        return ResponseEntity.created(URI.create(String.format("/api/users/%s", countryCode))).build();
+    }
+
+    /**
+     * Obtiene todos los usuarios mediante SQL nativo.
+     */
+    @GetMapping("/{countryCode}/native")
+    public ResponseEntity<List<User>> getAllUsersNative(@PathVariable String countryCode) {
+        List<User> users = userService.findAllNative();
+        return ResponseEntity.ok(users);
+    }
+
+    /**
+     * Busca un usuario por su ID con SQL manual.
+     */
+    @GetMapping("/{countryCode}/native/{id}")
+    public ResponseEntity<User> getUserByIdNative(@PathVariable String countryCode, @PathVariable Long id) {
+        return userService.findByIdNative(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Actualiza un usuario existente con SQL manual.
+     */
+    @PutMapping("/{countryCode}/native")
+    public ResponseEntity<Void> updateUserNative(@PathVariable String countryCode, @RequestBody User user) {
+        userService.updateUserNative(user);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Elimina un usuario por ID con SQL manual.
+     */
+    @DeleteMapping("/{countryCode}/native/{id}")
+    public ResponseEntity<Void> deleteUserByIdNative(@PathVariable String countryCode, @PathVariable Long id) {
+        userService.deleteUserByIdNative(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Elimina todos los usuarios del país indicado con SQL manual.
+     */
+    @DeleteMapping("/{countryCode}/native")
+    public ResponseEntity<Void> deleteAllUsersNative(@PathVariable String countryCode) {
+        userService.deleteAllUsersNative();
+        return ResponseEntity.noContent().build();
     }
 }

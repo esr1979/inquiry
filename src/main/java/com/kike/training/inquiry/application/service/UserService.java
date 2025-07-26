@@ -30,24 +30,79 @@ public class UserService implements UserServicePort {
     public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
+// =========================================================
+    // === MÉTODOS ESTÁNDAR (usando Spring Data Repository) ===
+    // =========================================================
 
+    /**
+     * Inserta o actualiza un usuario usando el repositorio clásico (Spring Data).
+     */
     @Override
     public User saveUser(User user) {
-        // La lógica es una simple delegación.
-        return userRepository.save(user);
+        return userRepository.save(user); // método heredado de ListCrudRepository
     }
 
+    /**
+     * Devuelve todos los usuarios usando Spring Data.
+     */
     @Override
     public List<User> getAllUsers() {
-        // El método findAll() de CrudRepository devuelve un Iterable, lo convertimos a List.
-        Iterable<User> usersIterable = userRepository.findAll();
-        return StreamSupport.stream(usersIterable.spliterator(), false)
+        Iterable<User> iterable = userRepository.findAll(); // Spring Data
+        return StreamSupport.stream(iterable.spliterator(), false)
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Busca un usuario por ID usando el repositorio Spring Data.
+     */
     @Override
     public Optional<User> getUserById(Long id) {
-        // Delegación directa.
-        return userRepository.findById(id);
+        return userRepository.findById(id); // Spring Data
+    }
+
+    // =========================================================
+    // === MÉTODOS PERSONALIZADOS (usando SQL con JdbcTemplate)
+    // =========================================================
+
+    /**
+     * Inserta un usuario usando SQL manual (JdbcTemplate).
+     */
+    public void insertUserNative(User user) {
+        userRepository.insertUserNative(user); // implementado en UserRepositoryImpl
+    }
+
+    /**
+     * Actualiza un usuario con SQL puro.
+     */
+    public void updateUserNative(User user) {
+        userRepository.updateUserNative(user);
+    }
+
+    /**
+     * Borra un usuario por su ID usando SQL manual.
+     */
+    public void deleteUserByIdNative(Long id) {
+        userRepository.deleteUserByIdNative(id);
+    }
+
+    /**
+     * Borra todos los usuarios de la tabla con SQL directo.
+     */
+    public void deleteAllUsersNative() {
+        userRepository.deleteAllUsersNative();
+    }
+
+    /**
+     * Busca un usuario por ID con SQL manual.
+     */
+    public Optional<User> findByIdNative(Long id) {
+        return userRepository.findByIdNative(id); // Implementado en la parte custom
+    }
+
+    /**
+     * Obtiene todos los usuarios mediante SQL directo.
+     */
+    public List<User> findAllNative() {
+        return userRepository.findAllNative();
     }
 }
