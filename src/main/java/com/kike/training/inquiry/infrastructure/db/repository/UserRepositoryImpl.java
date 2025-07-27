@@ -136,28 +136,24 @@ public class UserRepositoryImpl implements UserRepositoryCustom {
     // =====================================
 
     @Override
-    public void insertUserNative(User user) {
-        // SQL de inserción con los campos que queremos guardar (sin incluir el ID, que es autogenerado).
+    public User insertUserNative(User user) {
         String sql = "INSERT INTO users (username, email) VALUES (?, ?)";
-
-        // El KeyHolder nos permite capturar el valor autogenerado del ID tras el INSERT.
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
-        // Ejecutamos la actualización usando una lambda que construye el PreparedStatement
         jdbcTemplate.update(connection -> {
-            // Creamos el PreparedStatement solicitando que nos devuelva las claves generadas automáticamente.
             PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-            ps.setString(1, user.getUsername()); // Asignamos el valor del primer parámetro (username)
-            ps.setString(2, user.getEmail());    // Asignamos el valor del segundo parámetro (email)
+            ps.setString(1, user.getUsername());
+            ps.setString(2, user.getEmail());
             return ps;
         }, keyHolder);
 
-        // Recuperamos la clave generada (el ID del nuevo usuario)
-        Number key = keyHolder.getKey();
-        if (key != null) {
-            user.setId(key.longValue()); // Asignamos el ID generado al objeto User
+        Number generatedId = keyHolder.getKey();
+        if (generatedId != null) {
+            user.setId(generatedId.longValue());
         }
+        return user;
     }
+
 
     @Override
     public void updateUserNative(User user) {

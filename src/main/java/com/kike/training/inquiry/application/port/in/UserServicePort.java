@@ -54,7 +54,7 @@ public interface UserServicePort {
      *
      * @param user El usuario a insertar.
      */
-    void insertUserNative(User user);
+    User insertUserNative(User user);
 
     /**
      * Actualiza un usuario existente mediante SQL nativo.

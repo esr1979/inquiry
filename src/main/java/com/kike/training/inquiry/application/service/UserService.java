@@ -67,8 +67,8 @@ public class UserService implements UserServicePort {
     /**
      * Inserta un usuario usando SQL manual (JdbcTemplate).
      */
-    public void insertUserNative(User user) {
-        userRepository.insertUserNative(user); // implementado en UserRepositoryImpl
+    public User insertUserNative(User user) {
+        return userRepository.insertUserNative(user);  // Ya devuelve el User con ID
     }
 
     /**

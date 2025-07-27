@@ -14,9 +14,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.core.env.Environment;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
@@ -55,6 +53,10 @@ class MultiTenantRoutingIntegrationTest {
 
     private String baseUrl(String iso) {
         return "http://localhost:" + port + "/api/users/" + iso;
+    }
+
+    private String baseNativeUrl(String iso) {
+        return baseUrl(iso) + "/native";
     }
 
     @BeforeEach
@@ -113,17 +115,15 @@ class MultiTenantRoutingIntegrationTest {
 
     @Test
     void testNativeInsertAndFindById() {
-        System.out.println(">>> testNativeInsertAndFindById");
-
         DataSourceContextHolder.setBranchContext("DE");
-        User user = new User(null, "Klaus", "klaus@de.com");
-        userServicePort.insertUserNative(user);
-        System.out.println(">>> Usuario insertado: " + user);
 
-        Optional<User> found = userServicePort.findByIdNative(user.getId());
-        System.out.println(">>> Usuario recuperado: " + found);
-        assertThat(found).isPresent();
-        assertThat(found.get().getUsername()).isEqualTo("Klaus");
+        User user = new User(null, "Test", "test@example.com");
+        User inserted = userServicePort.insertUserNative(user);  // Recibes el User con ID
+        System.out.println(">>> Usuario insertado: " + inserted);
+
+        Optional<User> loaded = userServicePort.findByIdNative(inserted.getId());
+        System.out.println(">>> Usuario recuperado: " + loaded);
+        assertThat(loaded).isPresent();
     }
 
     @Test
@@ -191,5 +191,111 @@ class MultiTenantRoutingIntegrationTest {
         List<User> after = userServicePort.findAllNative();
         System.out.println(">>> Después de borrar: " + after);
         assertThat(after).isEmpty();
+    }
+
+    // ============ TESTS CON REST PERO USANDO LOS ENDPOINTS NATIVOS ============
+
+    @Test
+    void testRestNativeInsertAndFindById() {
+        System.out.println(">>> testRestNativeInsertAndFindById");
+
+        User user = new User(null, "Nati", "nati@de.com");
+        ResponseEntity<User> created = restTemplate.postForEntity(baseNativeUrl("DE"), user, User.class);
+
+        assertThat(created.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(created.getBody()).isNotNull();
+        System.out.println(">>> Usuario insertado (REST): " + created.getBody());
+
+        Long userId = created.getBody().getId();
+        ResponseEntity<User> response = restTemplate.getForEntity(baseNativeUrl("DE") + "/" + userId, User.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        System.out.println(">>> Usuario recuperado (REST): " + response.getBody());
+    }
+
+    @Test
+    void testRestNativeFindAll() {
+        System.out.println(">>> testRestNativeFindAll");
+
+        restTemplate.postForEntity(baseNativeUrl("ES"), new User(null, "Eva", "eva@es.com"), User.class);
+        restTemplate.postForEntity(baseNativeUrl("ES"), new User(null, "Pedro", "pedro@es.com"), User.class);
+
+        ResponseEntity<List<User>> response = restTemplate.exchange(
+                baseNativeUrl("ES"),
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<>() {}
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        List<User> users = response.getBody();
+        System.out.println(">>> Usuarios recuperados (REST): " + users);
+        assertThat(users).hasSize(2);
+    }
+
+    @Test
+    void testRestNativeUpdateUser() {
+        System.out.println(">>> testRestNativeUpdateUser");
+
+        User user = new User(null, "John", "john@gb.com");
+        ResponseEntity<User> created = restTemplate.postForEntity(baseNativeUrl("GB"), user, User.class);
+        User toUpdate = created.getBody();
+        assertThat(toUpdate).isNotNull();
+
+        toUpdate.setUsername("Johnny");
+        toUpdate.setEmail("johnny@gb.com");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<User> entity = new HttpEntity<>(toUpdate, headers);
+
+        ResponseEntity<Void> response = restTemplate.exchange(
+                baseNativeUrl("GB"),
+                HttpMethod.PUT,
+                entity,
+                Void.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        System.out.println(">>> Usuario actualizado (REST): " + toUpdate);
+
+        ResponseEntity<User> updated = restTemplate.getForEntity(baseNativeUrl("GB") + "/" + toUpdate.getId(), User.class);
+        assertThat(updated.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(updated.getBody().getUsername()).isEqualTo("Johnny");
+    }
+
+    @Test
+    void testRestNativeDeleteById() {
+        System.out.println(">>> testRestNativeDeleteById");
+
+        User user = new User(null, "Carlos", "carlos@de.com");
+        ResponseEntity<User> created = restTemplate.postForEntity(baseNativeUrl("DE"), user, User.class);
+        Long id = created.getBody().getId();
+
+        restTemplate.delete(baseNativeUrl("DE") + "/" + id);
+        System.out.println(">>> Usuario eliminado por ID (REST): " + id);
+
+        ResponseEntity<User> response = restTemplate.getForEntity(baseNativeUrl("DE") + "/" + id, User.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void testRestNativeDeleteAll() {
+        System.out.println(">>> testRestNativeDeleteAll");
+
+        restTemplate.postForEntity(baseNativeUrl("ES"), new User(null, "Pepa", "pepa@es.com"), User.class);
+        restTemplate.postForEntity(baseNativeUrl("ES"), new User(null, "Luis", "luis@es.com"), User.class);
+
+        restTemplate.delete(baseNativeUrl("ES"));
+        System.out.println(">>> Todos los usuarios eliminados (REST)");
+
+        ResponseEntity<List<User>> response = restTemplate.exchange(
+                baseNativeUrl("ES"),
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<>() {}
+        );
+
+        assertThat(response.getBody()).isEmpty();
     }
 }

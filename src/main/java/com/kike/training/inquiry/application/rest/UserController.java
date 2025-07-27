@@ -75,21 +75,29 @@ public class UserController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    // =============================================
-    // MÉTODOS CON SQL NATIVO (JdbcTemplate)
-    // =============================================
+// =============================================
+// MÉTODOS CON SQL NATIVO (JdbcTemplate)
+// =============================================
 
     /**
-     * Inserta un usuario usando SQL manual (JdbcTemplate).
+     * Inserta un usuario usando SQL manual (JdbcTemplate) y devuelve el objeto creado con ID.
+     *
+     * @param countryCode Código del país interceptado por el Aspect.
+     * @param user Usuario a insertar.
+     * @return HTTP 201 con el usuario creado.
      */
     @PostMapping("/{countryCode}/native")
-    public ResponseEntity<Void> createUserNative(@PathVariable String countryCode, @RequestBody User user) {
-        userService.insertUserNative(user);
-        return ResponseEntity.created(URI.create(String.format("/api/users/%s", countryCode))).build();
+    public ResponseEntity<User> createUserNative(@PathVariable String countryCode, @RequestBody User user) {
+        User savedUser = userService.insertUserNative(user);
+        URI location = URI.create(String.format("/api/users/%s/native/%d", countryCode, savedUser.getId()));
+        return ResponseEntity.created(location).body(savedUser);
     }
 
     /**
      * Obtiene todos los usuarios mediante SQL nativo.
+     *
+     * @param countryCode Código del país interceptado por el Aspect.
+     * @return Lista de usuarios.
      */
     @GetMapping("/{countryCode}/native")
     public ResponseEntity<List<User>> getAllUsersNative(@PathVariable String countryCode) {
@@ -99,6 +107,10 @@ public class UserController {
 
     /**
      * Busca un usuario por su ID con SQL manual.
+     *
+     * @param countryCode Código del país interceptado por el Aspect.
+     * @param id ID del usuario a buscar.
+     * @return El usuario si existe o 404 Not Found.
      */
     @GetMapping("/{countryCode}/native/{id}")
     public ResponseEntity<User> getUserByIdNative(@PathVariable String countryCode, @PathVariable Long id) {
@@ -109,6 +121,10 @@ public class UserController {
 
     /**
      * Actualiza un usuario existente con SQL manual.
+     *
+     * @param countryCode Código del país interceptado por el Aspect.
+     * @param user Usuario con datos actualizados.
+     * @return HTTP 204 No Content si se actualiza correctamente.
      */
     @PutMapping("/{countryCode}/native")
     public ResponseEntity<Void> updateUserNative(@PathVariable String countryCode, @RequestBody User user) {
@@ -118,6 +134,10 @@ public class UserController {
 
     /**
      * Elimina un usuario por ID con SQL manual.
+     *
+     * @param countryCode Código del país interceptado por el Aspect.
+     * @param id ID del usuario a eliminar.
+     * @return HTTP 204 No Content.
      */
     @DeleteMapping("/{countryCode}/native/{id}")
     public ResponseEntity<Void> deleteUserByIdNative(@PathVariable String countryCode, @PathVariable Long id) {
@@ -127,6 +147,9 @@ public class UserController {
 
     /**
      * Elimina todos los usuarios del país indicado con SQL manual.
+     *
+     * @param countryCode Código del país interceptado por el Aspect.
+     * @return HTTP 204 No Content.
      */
     @DeleteMapping("/{countryCode}/native")
     public ResponseEntity<Void> deleteAllUsersNative(@PathVariable String countryCode) {

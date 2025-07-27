@@ -24,7 +24,7 @@ public interface UserRepositoryCustom {
      *
      * @param user Usuario a insertar.
      */
-    void insertUserNative(User user);
+    User insertUserNative(User user);
 
     /**
      * Actualiza un usuario existente por su ID.
