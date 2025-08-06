@@ -69,25 +69,108 @@ tasks.named('test') {
 }
 
 
-// Reemplaza el bloque bootRun entero por este:
-bootRun {
-	// Preparamos una lista para los argumentos de la JVM
-	jvmArgs = []
-	doFirst {
-		def envFile = new File(project.rootDir, "MultiDBLocal.env")
-		if (envFile.exists()) {
-			println "INFO: Cargando configuración de DataSources desde MultiDBLocal.env"
-			envFile.eachLine { line ->
-				// Ignora líneas vacías o comentarios
-				if (line && !line.startsWith('#') && line.contains('=')) {
-					def (key, value) = line.split('=', 2)
-					// Añadimos cada propiedad como un argumento -D a la JVM.
-					// Esta es la forma canónica de hacerlo.
-					jvmArgs += "-D${key.trim()}=${value.trim()}"
-				}
+
+/**
+ * Esta es una función auxiliar definida en un estilo clásico, como un método de Java.
+ * Su misión es leer un fichero y llenar un mapa con las propiedades.
+ * La definimos fuera del 'doFirst' para que quede más clara su naturaleza de "utilidad".
+ * @param fileToLoad El fichero del que leeremos las propiedades.
+ * @param propertiesMap El mapa donde guardaremos las propiedades encontradas.
+ */
+void loadPropertiesFromFile(File fileToLoad, Map<String, String> propertiesMap) {
+	println ">> INFO: Leyendo fichero de configuración '${fileToLoad.name}'..."
+	// Usamos un bucle 'for' clásico para iterar sobre cada línea del fichero.
+	for (String line : fileToLoad.readLines()) {
+		String trimmedLine = line.trim()
+		// Usamos condicionales 'if' para validar cada línea.
+		if (!trimmedLine.isEmpty() && !trimmedLine.startsWith('#') && trimmedLine.contains('=')) {
+			// Dividimos la línea en un array de dos elementos.
+			String[] parts = trimmedLine.split('=', 2)
+			if (parts.length == 2) {
+				String key = parts[0].trim()
+				String value = parts[1].trim()
+				// Añadimos la clave y el valor al mapa.
+				propertiesMap.put(key, value)
 			}
-			// Log de depuración para ver qué argumentos estamos pasando
-			println "INFO: Pasando los siguientes argumentos a la JVM: ${jvmArgs}"
+		}
+	}
+}
+
+bootRun {
+	doFirst {
+		def localEnvFile = file("local.env")
+
+		// La cláusula de guarda principal se mantiene igual.
+		if (localEnvFile.exists()) {
+
+			println ">> INFO: Fichero de control 'local.env' encontrado. Iniciando proceso de configuración..."
+
+			def envProperties = [:]
+
+			// 1. Llamamos a nuestra función auxiliar clásica para cargar 'local.env'.
+			loadPropertiesFromFile(localEnvFile, envProperties)
+
+			String profilesLine = envProperties.get('spring.profiles.active')
+
+			if (profilesLine != null) {
+				println ">> INFO: Perfiles detectados en 'local.env': [${profilesLine}]"
+
+				// --- Reemplazo de .collect ---
+				// Creamos una nueva lista vacía.
+				List<String> activeProfiles = new ArrayList<>()
+				// Dividimos la cadena de perfiles en un array.
+				String[] rawProfiles = profilesLine.split(',')
+				// Iteramos sobre el array con un bucle 'for' para limpiar y añadir cada perfil.
+				for (String rawProfile : rawProfiles) {
+					activeProfiles.add(rawProfile.trim())
+				}
+
+				// Comprobamos si la lista de perfiles contiene nuestro marcador.
+				if (activeProfiles.contains('localOS')) {
+					println ">> INFO: Perfil 'localOS' detectado. Buscando entorno a simular..."
+
+					// --- Reemplazo de .find ---
+					// Declaramos una variable para guardar el resultado.
+					String envProfileToSimulate = null
+					// Iteramos sobre la lista de perfiles con un bucle 'for'.
+					for (String profile : activeProfiles) {
+						// Usamos un 'if' para encontrar el que NO es 'localOS'.
+						if (profile != 'localOS') {
+							envProfileToSimulate = profile
+							// Rompemos el bucle una vez que lo hemos encontrado.
+							break
+						}
+					}
+
+					if (envProfileToSimulate != null) {
+						def simulationFile = file("${envProfileToSimulate}.env")
+						if (simulationFile.exists()) {
+							println ">> INFO: Se simulará el entorno '${envProfileToSimulate}'."
+							// Llamamos de nuevo a nuestra función para cargar el fichero de simulación.
+							loadPropertiesFromFile(simulationFile, envProperties)
+						} else {
+							println ">> ERROR: Se intentó simular '${envProfileToSimulate}', pero el fichero '${simulationFile.name}' no existe."
+						}
+					} else {
+						println ">> WARN: 'localOS' fue detectado pero no se especificó otro perfil de entorno (ej. dev2)."
+					}
+				}
+			} else {
+				println ">> WARN: No se encontró 'spring.profiles.active' en 'local.env'."
+			}
+
+			// --- Reemplazo de .each ---
+			// Usamos un bucle 'for' clásico para iterar sobre las entradas del mapa.
+			println ">> INFO: Inyectando propiedades finales en el sistema..."
+			for (Map.Entry<String, String> entry : envProperties.entrySet()) {
+				String key = entry.getKey()
+				String value = entry.getValue()
+				systemProperty(key, value)
+				println "   -> ${key}=${value}"
+			}
+
+		} else {
+			println ">> INFO: No se encontró el fichero 'local.env'. Se asume arranque estándar."
 		}
 	}
 }
