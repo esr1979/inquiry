@@ -121,6 +121,18 @@ public class DataSourceConfig {
             log.info("Migraciones comunes completadas con éxito.");
         }
 
+        /**
+         * Extrae el código de país de 2 letras de un nombre de pool.
+         * Ejemplo: "DB-AS400-ES" -> "ES"
+         */
+        private String extractCountryCodeFromPoolName(String poolName) {
+            if (poolName == null || !poolName.contains("-")) {
+                // Fallo rápido si el formato no es el esperado
+                throw new IllegalArgumentException("El formato del nombre del pool es inválido: " + poolName);
+            }
+            return poolName.substring(poolName.lastIndexOf('-') + 1);
+        }
+
         @Bean
         @Primary
         public DataSource datasourceOpenShift() {
@@ -182,7 +194,9 @@ public class DataSourceConfig {
 
                         return dataSource;
                     })
-                    .collect(Collectors.toMap(HikariDataSource::getPoolName, Function.identity()));
+                    //La clave en vez de ser DB-AS400-XX va a ser XX
+                    //.collect(Collectors.toMap(HikariDataSource::getPoolName, Function.identity()));
+                    .collect(Collectors.toMap(ds -> extractCountryCodeFromPoolName(ds.getPoolName()), Function.identity()));
 
             if (datasourceMap.isEmpty()) {
                 log.error("¡ALERTA! No se encontraron propiedades para datasources (DB-AS400-*-URL).");

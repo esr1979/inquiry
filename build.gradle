@@ -64,11 +64,14 @@ dependencies {
 	implementation 'org.flywaydb:flyway-core'
 }
 
-tasks.named('test') {
+
+// Busca la configuración de la tarea 'test'. Si no existe, puedes añadirla.
+// Esta es la forma más moderna y recomendada.
+tasks.named("test") {
+
 	useJUnitPlatform()
+
 }
-
-
 
 /**
  * Esta es una función auxiliar definida en un estilo clásico, como un método de Java.

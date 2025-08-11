@@ -4,6 +4,7 @@ import com.kike.training.inquiry.application.port.in.UserServicePort;
 import com.kike.training.inquiry.domain.model.User;
 import com.kike.training.inquiry.infrastructure.db.config.DataSourceContextHolder;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -57,6 +58,18 @@ class MultiTenantRoutingIntegrationTest {
 
     private String baseNativeUrl(String iso) {
         return baseUrl(iso) + "/native";
+    }
+
+    /**
+     * MÉTODO DE LIMPIEZA CRÍTICO.
+     * Se ejecuta después de CADA método @Test en esta clase.
+     * Su única misión es limpiar el ThreadLocal para evitar que un test
+     * contamine al siguiente.
+     */
+    @AfterEach
+    void tearDown() {
+        // Limpia el contexto del tenant para asegurar que el thread se devuelve limpio al pool.
+        DataSourceContextHolder.clearBranchContext();
     }
 
     @BeforeEach
