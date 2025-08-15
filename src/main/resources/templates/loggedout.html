@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Sesión Cerrada</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); width: 400px; text-align: center; }
+        h2 { color: #333; margin-bottom: 20px; }
+        p { color: #555; margin-top: 20px; }
+        .login-link { display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; font-size: 16px; }
+        .login-link:hover { background-color: #0056b3; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>¡Sesión Cerrada!</h2>
+    <p>Has cerrado sesión correctamente.</p>
+    <a th:href="@{/}" class="login-link">Volver a iniciar sesión</a>
+</div>
+</body>
+</html>

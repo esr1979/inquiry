@@ -62,6 +62,20 @@ dependencies {
 
 	// Flyway
 	implementation 'org.flywaydb:flyway-core'
+
+	// --- INICIO DE LA SECCIÓN AÑADIDA PARA MICROSOFT ENTRA ID ---
+
+	// Azure Spring Boot Starter para Active Directory (Entra ID)
+	// Proporciona integración con Spring Security para autenticación OIDC/OAuth2 con Entra ID.
+	// NOTA IMPORTANTE: La versión '5.23.0' es compatible con Spring Boot 3.5.x. [1]
+	implementation 'com.azure.spring:spring-cloud-azure-starter-active-directory:5.23.0'
+
+	// Spring Boot Starter para el cliente OAuth2
+	// Aunque el starter de Azure AD a menudo lo incluye como dependencia transitiva,
+	// lo incluimos explícitamente para mayor claridad y asegurar la funcionalidad completa de OAuth2.
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
+	// --- FIN DE LA SECCIÓN AÑADIDA PARA MICROSOFT ENTRA ID ---
 }
 
 
@@ -177,4 +191,3 @@ bootRun {
 		}
 	}
 }
-

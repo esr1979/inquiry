@@ -35,24 +35,41 @@
         .logout-button {
             margin-top: 30px;
             padding: 10px 20px;
-            background-color: #007bff;
+            background-color: #dc3545; /* Rojo para logout */
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             text-decoration: none;
             font-size: 16px;
+            transition: background-color 0.3s ease;
         }
         .logout-button:hover {
-            background-color: #0056b3;
+            background-color: #c82333;
+        }
+        pre {
+            background-color: #eee;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: left;
+            overflow-x: auto;
+            white-space: pre-wrap; /* Para que el texto se ajuste */
+            word-wrap: break-word; /* Para cortar palabras largas */
         }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1 th:text="${welcomeMessage}"></h1>
-    <p>Has iniciado sesión correctamente y has llegado a la página de bienvenida.</p>
-    <p>¡Esto significa que tu configuración de seguridad y web está funcionando genial!</p>
+    <h1 th:text="${welcomeMessage}">¡Bienvenido!</h1>
+    <div th:if="${userName}">
+        <p>Has iniciado sesión como: <strong th:text="${userName}"></strong></p>
+        <p>Tu correo electrónico: <strong th:text="${email}"></strong></p>
+        <p>Claims (atributos) de tu sesión:</p>
+        <pre th:text="${claims}"></pre>
+    </div>
+    <div th:unless="${userName}">
+        <p>No se encontró información de usuario. Por favor, <a th:href="@{/oauth2/authorization/azure}">inicia sesión</a>.</p>
+    </div>
 
     <form th:action="@{/logout}" method="post">
         <button type="submit" class="logout-button">Cerrar Sesión</button>

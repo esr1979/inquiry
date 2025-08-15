@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Bienvenido a Ford</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); width: 400px; text-align: center; }
+        h2 { color: #333; margin-bottom: 20px; }
+        .login-button { display: inline-block; padding: 12px 25px; background-color: #0078D4; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 18px; text-decoration: none; transition: background-color 0.3s ease; }
+        .login-button:hover { background-color: #005A9E; }
+        p { color: #555; margin-top: 20px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Bienvenido a la Aplicación Ford</h2>
+    <p>Por favor, inicia sesión para continuar.</p>
+    <!-- Este enlace/botón inicia el flujo de autenticación OAuth2/OIDC con Microsoft Entra ID -->
+    <!-- Spring Security interceptará esta URL y redirigirá al usuario a la página de login de Entra ID -->
+    <a th:href="@{/oauth2/authorization/azure}" class="login-button">Iniciar Sesión con Microsoft Entra ID</a>
+</div>
+</body>
+</html>
