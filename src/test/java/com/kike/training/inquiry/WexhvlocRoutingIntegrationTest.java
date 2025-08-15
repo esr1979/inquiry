@@ -1,5 +1,6 @@
 package com.kike.training.inquiry;
 
+import com.kike.training.inquiry.config.TestClientConfig;
 import com.kike.training.inquiry.domain.model.Wexhvloc;
 import com.kike.training.inquiry.infrastructure.db.config.DataSourceContextHolder;
 import org.junit.jupiter.api.AfterEach;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
@@ -37,6 +39,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
+@Import(TestClientConfig.class)
 @DisplayName("Tests de Integración de Enrutamiento para Wexhvloc")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class WexhvlocRoutingIntegrationTest {

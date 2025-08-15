@@ -1,6 +1,7 @@
 package com.kike.training.inquiry;
 
 import com.kike.training.inquiry.application.port.in.UserServicePort;
+import com.kike.training.inquiry.config.TestClientConfig;
 import com.kike.training.inquiry.domain.model.User;
 import com.kike.training.inquiry.infrastructure.db.config.DataSourceContextHolder;
 
@@ -13,6 +14,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
@@ -32,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 )
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Import(TestClientConfig.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class MultiTenantRoutingIntegrationTest {
 
