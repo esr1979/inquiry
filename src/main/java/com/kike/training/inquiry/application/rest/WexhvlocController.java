@@ -41,7 +41,6 @@ public class WexhvlocController {
      *         - Una cabecera 'Location' con la URI para acceder al nuevo recurso.
      */
     @PostMapping
-    @PreAuthorize("hasRole('Wexhvloc.Creator') or hasRole('Wexhvloc.Admin')") // <--- Protección añadida
     public ResponseEntity<Wexhvloc> createExhibitionLocation(@RequestBody Wexhvloc exhibitionLocation) {
         Wexhvloc createdLocation = wexhvlocService.createExhibitionLocation(exhibitionLocation);
 
@@ -74,7 +73,6 @@ public class WexhvlocController {
      *         - Status 404 Not Found si no se encuentra.
      */
     @GetMapping
-    @PreAuthorize("hasRole('Wexhvloc.Reader') or hasRole('Wexhvloc.Admin')") // <--- Protección añadida
     public ResponseEntity<Wexhvloc> findExhibitionLocation(
             @RequestParam String cdisoloc, @RequestParam BigDecimal cdcompany,
             @RequestParam BigDecimal cddealer, @RequestParam String chassis,
@@ -98,7 +96,6 @@ public class WexhvlocController {
      *         - Status 404 Not Found si el registro a actualizar no existe (gestionado por la excepción del servicio).
      */
     @PutMapping
-    @PreAuthorize("hasRole('Wexhvloc.Updater') or hasRole('Wexhvloc.Admin')") // <--- Protección añadida
     public ResponseEntity<Void> updateExhibitionLocation(@RequestBody Wexhvloc exhibitionLocation) {
         // La lógica ha sido simplificada. El servicio ahora devuelve void o lanza una excepción.
         // Si no se encuentra la entidad, el servicio lanzará una ResponseStatusException.
@@ -125,7 +122,6 @@ public class WexhvlocController {
      *         - Status 404 Not Found si el registro a borrar no existe (gestionado por la excepción del servicio).
      */
     @DeleteMapping
-    @PreAuthorize("hasRole('Wexhvloc.Deleter') or hasRole('Wexhvloc.Admin')") // <--- Protección añadida
     public ResponseEntity<Void> deleteExhibitionLocation(
             @RequestParam String cdisoloc, @RequestParam BigDecimal cdcompany,
             @RequestParam BigDecimal cddealer, @RequestParam String chassis,

@@ -19,8 +19,10 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.Arrays;
 import java.util.List;
@@ -62,6 +64,18 @@ class MultiTenantRoutingIntegrationTest {
     private String baseNativeUrl(String iso) {
         return baseUrl(iso) + "/native";
     }
+
+    // =========================================================================
+    // === LA SOLUCIÓN DEFINITIVA, MODERNA Y SIN ADVERTENCIAS ===
+    //
+    // Usamos @MockitoBean, el reemplazo oficial de @MockBean.
+    // Declaramos un campo del tipo que queremos mockear y lo anotamos.
+    // Spring se encarga de crear el mock y reemplazar el bean en el contexto.
+    //
+    @MockitoBean
+    private ClientRegistrationRepository clientRegistrationRepository;
+    // =========================================================================
+
 
     /**
      * MÉTODO DE LIMPIEZA CRÍTICO.
@@ -106,17 +120,23 @@ class MultiTenantRoutingIntegrationTest {
         User bob   = new User(null, "Bob_GB",   "bob@gb.com");
         User carol = new User(null, "Carol_ES", "carol@es.com");
 
-        ResponseEntity<User> respDe = restTemplate.postForEntity(baseUrl("DE"), alice, User.class);
-        ResponseEntity<User> respGb = restTemplate.postForEntity(baseUrl("GB"), bob,   User.class);
-        ResponseEntity<User> respEs = restTemplate.postForEntity(baseUrl("ES"), carol, User.class);
+        // === AÑADIDA AUTENTICACIÓN ===
+        ResponseEntity<User> respDe = restTemplate.withBasicAuth("testuser", "testpassword").postForEntity(baseUrl("DE"), alice, User.class);
+        // === AÑADIDA AUTENTICACIÓN ===
+        ResponseEntity<User> respGb = restTemplate.withBasicAuth("testuser", "testpassword").postForEntity(baseUrl("GB"), bob,   User.class);
+        // === AÑADIDA AUTENTICACIÓN ===
+        ResponseEntity<User> respEs = restTemplate.withBasicAuth("testuser", "testpassword").postForEntity(baseUrl("ES"), carol, User.class);
 
         assertThat(respDe.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(respGb.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(respEs.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
-        ResponseEntity<List<User>> listDe = restTemplate.exchange(baseUrl("DE"), HttpMethod.GET, null, new ParameterizedTypeReference<>() {});
-        ResponseEntity<List<User>> listGb = restTemplate.exchange(baseUrl("GB"), HttpMethod.GET, null, new ParameterizedTypeReference<>() {});
-        ResponseEntity<List<User>> listEs = restTemplate.exchange(baseUrl("ES"), HttpMethod.GET, null, new ParameterizedTypeReference<>() {});
+        // === AÑADIDA AUTENTICACIÓN ===
+        ResponseEntity<List<User>> listDe = restTemplate.withBasicAuth("testuser", "testpassword").exchange(baseUrl("DE"), HttpMethod.GET, null, new ParameterizedTypeReference<>() {});
+        // === AÑADIDA AUTENTICACIÓN ===
+        ResponseEntity<List<User>> listGb = restTemplate.withBasicAuth("testuser", "testpassword").exchange(baseUrl("GB"), HttpMethod.GET, null, new ParameterizedTypeReference<>() {});
+        // === AÑADIDA AUTENTICACIÓN ===
+        ResponseEntity<List<User>> listEs = restTemplate.withBasicAuth("testuser", "testpassword").exchange(baseUrl("ES"), HttpMethod.GET, null, new ParameterizedTypeReference<>() {});
 
         System.out.println(">>> DE: " + listDe.getBody());
         System.out.println(">>> GB: " + listGb.getBody());
@@ -127,14 +147,14 @@ class MultiTenantRoutingIntegrationTest {
         assertThat(listEs.getBody()).hasSize(1).extracting(User::getUsername).containsExactly("Carol_ES");
     }
 
-    // ============ TESTS CON MÉTODOS NATIVOS ===================
+    // ============ TESTS CON MÉTODOS NATIVOS (NO REQUIEREN CAMBIOS) ===================
 
     @Test
     void testNativeInsertAndFindById() {
         DataSourceContextHolder.setBranchContext("DE");
 
         User user = new User(null, "Test", "test@example.com");
-        User inserted = userServicePort.insertUserNative(user);  // Recibes el User con ID
+        User inserted = userServicePort.insertUserNative(user);
         System.out.println(">>> Usuario insertado: " + inserted);
 
         Optional<User> loaded = userServicePort.findByIdNative(inserted.getId());
@@ -216,14 +236,16 @@ class MultiTenantRoutingIntegrationTest {
         System.out.println(">>> testRestNativeInsertAndFindById");
 
         User user = new User(null, "Nati", "nati@de.com");
-        ResponseEntity<User> created = restTemplate.postForEntity(baseNativeUrl("DE"), user, User.class);
+        // === AÑADIDA AUTENTICACIÓN ===
+        ResponseEntity<User> created = restTemplate.withBasicAuth("testuser", "testpassword").postForEntity(baseNativeUrl("DE"), user, User.class);
 
         assertThat(created.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(created.getBody()).isNotNull();
         System.out.println(">>> Usuario insertado (REST): " + created.getBody());
 
         Long userId = created.getBody().getId();
-        ResponseEntity<User> response = restTemplate.getForEntity(baseNativeUrl("DE") + "/" + userId, User.class);
+        // === AÑADIDA AUTENTICACIÓN ===
+        ResponseEntity<User> response = restTemplate.withBasicAuth("testuser", "testpassword").getForEntity(baseNativeUrl("DE") + "/" + userId, User.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
         System.out.println(">>> Usuario recuperado (REST): " + response.getBody());
@@ -233,10 +255,13 @@ class MultiTenantRoutingIntegrationTest {
     void testRestNativeFindAll() {
         System.out.println(">>> testRestNativeFindAll");
 
-        restTemplate.postForEntity(baseNativeUrl("ES"), new User(null, "Eva", "eva@es.com"), User.class);
-        restTemplate.postForEntity(baseNativeUrl("ES"), new User(null, "Pedro", "pedro@es.com"), User.class);
+        // === AÑADIDA AUTENTICACIÓN ===
+        restTemplate.withBasicAuth("testuser", "testpassword").postForEntity(baseNativeUrl("ES"), new User(null, "Eva", "eva@es.com"), User.class);
+        // === AÑADIDA AUTENTICACIÓN ===
+        restTemplate.withBasicAuth("testuser", "testpassword").postForEntity(baseNativeUrl("ES"), new User(null, "Pedro", "pedro@es.com"), User.class);
 
-        ResponseEntity<List<User>> response = restTemplate.exchange(
+        // === AÑADIDA AUTENTICACIÓN ===
+        ResponseEntity<List<User>> response = restTemplate.withBasicAuth("testuser", "testpassword").exchange(
                 baseNativeUrl("ES"),
                 HttpMethod.GET,
                 null,
@@ -254,7 +279,8 @@ class MultiTenantRoutingIntegrationTest {
         System.out.println(">>> testRestNativeUpdateUser");
 
         User user = new User(null, "John", "john@gb.com");
-        ResponseEntity<User> created = restTemplate.postForEntity(baseNativeUrl("GB"), user, User.class);
+        // === AÑADIDA AUTENTICACIÓN ===
+        ResponseEntity<User> created = restTemplate.withBasicAuth("testuser", "testpassword").postForEntity(baseNativeUrl("GB"), user, User.class);
         User toUpdate = created.getBody();
         assertThat(toUpdate).isNotNull();
 
@@ -265,7 +291,8 @@ class MultiTenantRoutingIntegrationTest {
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<User> entity = new HttpEntity<>(toUpdate, headers);
 
-        ResponseEntity<Void> response = restTemplate.exchange(
+        // === AÑADIDA AUTENTICACIÓN ===
+        ResponseEntity<Void> response = restTemplate.withBasicAuth("testuser", "testpassword").exchange(
                 baseNativeUrl("GB"),
                 HttpMethod.PUT,
                 entity,
@@ -275,7 +302,8 @@ class MultiTenantRoutingIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
         System.out.println(">>> Usuario actualizado (REST): " + toUpdate);
 
-        ResponseEntity<User> updated = restTemplate.getForEntity(baseNativeUrl("GB") + "/" + toUpdate.getId(), User.class);
+        // === AÑADIDA AUTENTICACIÓN ===
+        ResponseEntity<User> updated = restTemplate.withBasicAuth("testuser", "testpassword").getForEntity(baseNativeUrl("GB") + "/" + toUpdate.getId(), User.class);
         assertThat(updated.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(updated.getBody().getUsername()).isEqualTo("Johnny");
     }
@@ -285,13 +313,16 @@ class MultiTenantRoutingIntegrationTest {
         System.out.println(">>> testRestNativeDeleteById");
 
         User user = new User(null, "Carlos", "carlos@de.com");
-        ResponseEntity<User> created = restTemplate.postForEntity(baseNativeUrl("DE"), user, User.class);
+        // === AÑADIDA AUTENTICACIÓN ===
+        ResponseEntity<User> created = restTemplate.withBasicAuth("testuser", "testpassword").postForEntity(baseNativeUrl("DE"), user, User.class);
         Long id = created.getBody().getId();
 
-        restTemplate.delete(baseNativeUrl("DE") + "/" + id);
+        // === AÑADIDA AUTENTICACIÓN ===
+        restTemplate.withBasicAuth("testuser", "testpassword").delete(baseNativeUrl("DE") + "/" + id);
         System.out.println(">>> Usuario eliminado por ID (REST): " + id);
 
-        ResponseEntity<User> response = restTemplate.getForEntity(baseNativeUrl("DE") + "/" + id, User.class);
+        // === AÑADIDA AUTENTICACIÓN ===
+        ResponseEntity<User> response = restTemplate.withBasicAuth("testuser", "testpassword").getForEntity(baseNativeUrl("DE") + "/" + id, User.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
@@ -299,13 +330,17 @@ class MultiTenantRoutingIntegrationTest {
     void testRestNativeDeleteAll() {
         System.out.println(">>> testRestNativeDeleteAll");
 
-        restTemplate.postForEntity(baseNativeUrl("ES"), new User(null, "Pepa", "pepa@es.com"), User.class);
-        restTemplate.postForEntity(baseNativeUrl("ES"), new User(null, "Luis", "luis@es.com"), User.class);
+        // === AÑADIDA AUTENTICACIÓN ===
+        restTemplate.withBasicAuth("testuser", "testpassword").postForEntity(baseNativeUrl("ES"), new User(null, "Pepa", "pepa@es.com"), User.class);
+        // === AÑADIDA AUTENTICACIÓN ===
+        restTemplate.withBasicAuth("testuser", "testpassword").postForEntity(baseNativeUrl("ES"), new User(null, "Luis", "luis@es.com"), User.class);
 
-        restTemplate.delete(baseNativeUrl("ES"));
+        // === AÑADIDA AUTENTICACIÓN ===
+        restTemplate.withBasicAuth("testuser", "testpassword").delete(baseNativeUrl("ES"));
         System.out.println(">>> Todos los usuarios eliminados (REST)");
 
-        ResponseEntity<List<User>> response = restTemplate.exchange(
+        // === AÑADIDA AUTENTICACIÓN ===
+        ResponseEntity<List<User>> response = restTemplate.withBasicAuth("testuser", "testpassword").exchange(
                 baseNativeUrl("ES"),
                 HttpMethod.GET,
                 null,

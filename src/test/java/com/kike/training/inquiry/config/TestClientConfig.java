@@ -3,6 +3,7 @@ package com.kike.training.inquiry.config;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 
 /**
  * Configuración específica para tests, marcada con @TestConfiguration.

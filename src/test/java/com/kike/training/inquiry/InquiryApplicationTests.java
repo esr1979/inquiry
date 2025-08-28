@@ -7,8 +7,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -43,5 +46,17 @@ class InquiryApplicationTests {
         assertNotNull(result, "La consulta no debería devolver null.");
         assertTrue(result >= 0, "El conteo de usuarios debería ser 0 o más.");
     }
+
+    // =========================================================================
+    // === LA SOLUCIÓN DEFINITIVA, MODERNA Y SIN ADVERTENCIAS ===
+    //
+    // Usamos @MockitoBean, el reemplazo oficial de @MockBean.
+    // Declaramos un campo del tipo que queremos mockear y lo anotamos.
+    // Spring se encarga de crear el mock y reemplazar el bean en el contexto.
+    //
+    @MockitoBean
+    private ClientRegistrationRepository clientRegistrationRepository;
+    // =========================================================================
+
 
 }

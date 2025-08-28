@@ -13,8 +13,11 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.*;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
+// === IMPORT ORIGINAL MANTENIDO, TAL COMO SOLICITASTE ===
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.math.BigDecimal;
@@ -42,6 +45,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Import(TestClientConfig.class)
 @DisplayName("Tests de Integración de Enrutamiento para Wexhvloc")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+// Le dices a esta clase de test, y solo a esta, que reemplace el
+// ClientRegistrationRepository por un mock.
 class WexhvlocRoutingIntegrationTest {
 
     /**
@@ -68,6 +73,18 @@ class WexhvlocRoutingIntegrationTest {
      */
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    // =========================================================================
+    // === LA SOLUCIÓN DEFINITIVA, MODERNA Y SIN ADVERTENCIAS ===
+    //
+    // Usamos @MockitoBean, el reemplazo oficial de @MockBean.
+    // Declaramos un campo del tipo que queremos mockear y lo anotamos.
+    // Spring se encarga de crear el mock y reemplazar el bean en el contexto.
+    //
+    @MockitoBean
+    private ClientRegistrationRepository clientRegistrationRepository;
+    // =========================================================================
+
 
     /**
      * Método de limpieza que se ejecuta ANTES de cada test (@Test).
@@ -118,19 +135,29 @@ class WexhvlocRoutingIntegrationTest {
         Wexhvloc locDe = createSampleWexhvloc("DE", "CHASSIS_DE_002", "L02");
 
         // Act: Persistir ambos registros.
-        restTemplate.postForEntity(BASE_URL, locEs, Wexhvloc.class);
-        restTemplate.postForEntity(BASE_URL, locDe, Wexhvloc.class);
+        // === PASO 3: AÑADIMOS AUTENTICACIÓN BÁSICA A LA LLAMADA ===
+        restTemplate.withBasicAuth("testuser", "testpassword")
+                .postForEntity(BASE_URL, locEs, Wexhvloc.class);
+        // === PASO 3: AÑADIMOS AUTENTICACIÓN BÁSICA A LA LLAMADA ===
+        restTemplate.withBasicAuth("testuser", "testpassword")
+                .postForEntity(BASE_URL, locDe, Wexhvloc.class);
 
         // Assert: Verificar que cada registro existe solo en su propio tenant.
         URI uriEs = buildGetUri(locEs);
-        assertThat(restTemplate.getForEntity(uriEs, Wexhvloc.class).getStatusCode()).isEqualTo(HttpStatus.OK);
+        // === PASO 3: AÑADIMOS AUTENTICACIÓN BÁSICA A LA LLAMADA ===
+        assertThat(restTemplate.withBasicAuth("testuser", "testpassword")
+                .getForEntity(uriEs, Wexhvloc.class).getStatusCode()).isEqualTo(HttpStatus.OK);
 
         URI uriDe = buildGetUri(locDe);
-        assertThat(restTemplate.getForEntity(uriDe, Wexhvloc.class).getStatusCode()).isEqualTo(HttpStatus.OK);
+        // === PASO 3: AÑADIMOS AUTENTICACIÓN BÁSICA A LA LLAMADA ===
+        assertThat(restTemplate.withBasicAuth("testuser", "testpassword")
+                .getForEntity(uriDe, Wexhvloc.class).getStatusCode()).isEqualTo(HttpStatus.OK);
 
         // Assert (La prueba clave): Intentar buscar el registro de ES en el tenant de DE.
         URI uriEsInDe = buildGetUri(locEs, "DE");
-        assertThat(restTemplate.getForEntity(uriEsInDe, Wexhvloc.class).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        // === PASO 3: AÑADIMOS AUTENTICACIÓN BÁSICA A LA LLAMADA ===
+        assertThat(restTemplate.withBasicAuth("testuser", "testpassword")
+                .getForEntity(uriEsInDe, Wexhvloc.class).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
     /**
@@ -153,12 +180,16 @@ class WexhvlocRoutingIntegrationTest {
     void testFullCrudCycleForSingleTenant() {
         // 1. CREATE (POST)
         Wexhvloc locGb = createSampleWexhvloc("GB", "CHASSIS_GB_999", "L09");
-        ResponseEntity<Wexhvloc> postResponse = restTemplate.postForEntity(BASE_URL, locGb, Wexhvloc.class);
+        // === PASO 3: AÑADIMOS AUTENTICACIÓN BÁSICA A LA LLAMADA ===
+        ResponseEntity<Wexhvloc> postResponse = restTemplate.withBasicAuth("testuser", "testpassword")
+                .postForEntity(BASE_URL, locGb, Wexhvloc.class);
         assertThat(postResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
         // 2. READ (GET)
         URI uriGb = buildGetUri(locGb);
-        ResponseEntity<Wexhvloc> getResponse = restTemplate.getForEntity(uriGb, Wexhvloc.class);
+        // === PASO 3: AÑADIMOS AUTENTICACIÓN BÁSICA A LA LLAMADA ===
+        ResponseEntity<Wexhvloc> getResponse = restTemplate.withBasicAuth("testuser", "testpassword")
+                .getForEntity(uriGb, Wexhvloc.class);
         assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(getResponse.getBody().getAdexhvl()).isEqualTo("Dirección de prueba para GB");
 
@@ -166,19 +197,27 @@ class WexhvlocRoutingIntegrationTest {
         Wexhvloc updatedLoc = getResponse.getBody();
         updatedLoc.setAdexhvl("Nueva Dirección Actualizada en Londres");
         HttpEntity<Wexhvloc> requestUpdate = new HttpEntity<>(updatedLoc);
-        ResponseEntity<Void> putResponse = restTemplate.exchange(BASE_URL, HttpMethod.PUT, requestUpdate, Void.class);
+        // === PASO 3: AÑADIMOS AUTENTICACIÓN BÁSICA A LA LLAMADA ===
+        ResponseEntity<Void> putResponse = restTemplate.withBasicAuth("testuser", "testpassword")
+                .exchange(BASE_URL, HttpMethod.PUT, requestUpdate, Void.class);
         assertThat(putResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
 
         // 4. VERIFY UPDATE
-        ResponseEntity<Wexhvloc> getUpdatedResponse = restTemplate.getForEntity(uriGb, Wexhvloc.class);
+        // === PASO 3: AÑADIMOS AUTENTICACIÓN BÁSICA A LA LLAMADA ===
+        ResponseEntity<Wexhvloc> getUpdatedResponse = restTemplate.withBasicAuth("testuser", "testpassword")
+                .getForEntity(uriGb, Wexhvloc.class);
         assertThat(getUpdatedResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(getUpdatedResponse.getBody().getAdexhvl()).isEqualTo("Nueva Dirección Actualizada en Londres");
 
         // 5. DELETE
-        restTemplate.delete(uriGb);
+        // === PASO 3: AÑADIMOS AUTENTICACIÓN BÁSICA A LA LLAMADA ===
+        restTemplate.withBasicAuth("testuser", "testpassword")
+                .delete(uriGb);
 
         // 6. VERIFY DELETE
-        ResponseEntity<Wexhvloc> getDeletedResponse = restTemplate.getForEntity(uriGb, Wexhvloc.class);
+        // === PASO 3: AÑADIMOS AUTENTICACIÓN BÁSICA A LA LLAMADA ===
+        ResponseEntity<Wexhvloc> getDeletedResponse = restTemplate.withBasicAuth("testuser", "testpassword")
+                .getForEntity(uriGb, Wexhvloc.class);
         assertThat(getDeletedResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
