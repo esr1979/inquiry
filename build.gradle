@@ -75,6 +75,9 @@ dependencies {
 	// lo incluimos explícitamente para mayor claridad y asegurar la funcionalidad completa de OAuth2.
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 
+	// Para poder securizar las apis y servir de servidor de recursos
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+
 	// --- FIN DE LA SECCIÓN AÑADIDA PARA MICROSOFT ENTRA ID ---
 }
 
