@@ -66,4 +66,5 @@ h2_dbs
 # env files. All files will have a template
 local.env
 dev2.env
+qa2.env
 src/main/resources/keystore.p12
