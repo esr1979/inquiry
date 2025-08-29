@@ -67,4 +67,5 @@ h2_dbs
 local.env
 dev2.env
 qa2.env
+pr2.env
 src/main/resources/keystore.p12
